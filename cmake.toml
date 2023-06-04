@@ -1,0 +1,23 @@
+# Reference: https://build-cpp.github.io/cmkr/cmake-toml
+[project]
+name = "MBR"
+include-before = [
+	"cmake/msvc-configurations.cmake",
+]
+
+[variables]
+CMAKE_MODULE_PATH = "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+
+[find-package.WDK]
+
+[template.driver]
+type = "executable"
+add-function = "wdk_add_driver"
+compile-features = ["cxx_std_17"]
+
+[target.MBR]
+type = "driver"
+sources = [
+    "src/MBR/*.cpp",
+    "src/MBR/*.hpp",
+]
