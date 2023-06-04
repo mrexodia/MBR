@@ -1,0 +1,38 @@
+name: Visual Studio
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    # Skip building pull requests from the same repository
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository) }}
+    runs-on: windows-2019
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    
+    - name: Build
+      run: |
+        cmake -B build
+        cmake --build build --config Release
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ${{ github.event.repository.name }}-${{ github.sha }}
+        path: build/Release
+    
+    - name: Compress artifacts
+      uses: papeloto/action-zip@v1
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      with:
+        files: build/Release
+        dest: ${{ github.event.repository.name }}-${{ github.sha }}.zip
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      with:
+        prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') || contains(github.ref, '-pre') }}
+        files: ${{ github.event.repository.name }}-${{ github.sha }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
