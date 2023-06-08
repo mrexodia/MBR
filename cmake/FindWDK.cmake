@@ -76,8 +76,27 @@ else() # WDK 8.0, 8.1
     set(WDK_VERSION "${WDK_LIB_VERSION}")
 endif()
 
-message(STATUS "WDK_ROOT: " ${WDK_ROOT})
-message(STATUS "WDK_VERSION: " ${WDK_VERSION})
+message(STATUS "WDK_ROOT: ${WDK_ROOT}")
+message(STATUS "WDK_VERSION: ${WDK_VERSION}")
+
+find_program(WDK_SIGNTOOL signtool
+    HINTS "${WDK_ROOT}/bin"
+    PATH_SUFFIXES
+        "${WDK_VERSION}/x64"
+        "${WDK_VERSION}/x86"
+        "x64"
+        "x86"
+    REQUIRED
+)
+message(STATUS "WDK_SIGNTOOL: ${WDK_SIGNTOOL}")
+
+get_filename_component(PACKAGE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(WDK_PFX "${PACKAGE_DIR}/TestSigning.pfx" CACHE STRING "Private key used for signing the driver")
+if(NOT EXISTS "${WDK_PFX}")
+    message(FATAL_ERROR "PFX not found: ${WDK_PFX}")
+else()
+    message(STATUS "PFX: ${WDK_PFX}")
+endif()
 
 set(WDK_WINVER "0x0601" CACHE STRING "Default WINVER for WDK targets")
 set(WDK_NTDDI_VERSION "" CACHE STRING "Specified NTDDI_VERSION for WDK targets if needed")
@@ -177,6 +196,13 @@ function(wdk_add_driver _target)
             set_property(TARGET ${_target} APPEND_STRING PROPERTY LINK_FLAGS "/ENTRY:GsDriverEntry")
         endif()
     endif()
+
+    # Code signing
+    add_custom_command(
+        TARGET ${_target} POST_BUILD
+        COMMAND "${WDK_SIGNTOOL}" sign /fd SHA256 /f "${WDK_PFX}" "$<TARGET_FILE:${_target}>"
+        VERBATIM
+    )
 endfunction()
 
 function(wdk_add_library _target)
