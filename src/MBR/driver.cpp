@@ -1,5 +1,6 @@
 #include "driver.hpp"
 #include "log.hpp"
+#include "notify.hpp"
 
 static UNICODE_STRING Win32Device;
 
@@ -9,8 +10,13 @@ _IRQL_requires_same_
 static void DriverUnload(_In_ PDRIVER_OBJECT DriverObject)
 {
     Log("DriverUnload");
+
+    // Clean up the device
     IoDeleteSymbolicLink(&Win32Device);
     IoDeleteDevice(DriverObject->DeviceObject);
+
+    // Unregister notify routines
+    NotifyUnload();
 }
 
 _Function_class_(DRIVER_DISPATCH)
@@ -66,16 +72,24 @@ NTSTATUS DriverEntry(_In_ PDRIVER_OBJECT DriverObject, _In_ PUNICODE_STRING Regi
         &DeviceObject);
     if (!NT_SUCCESS(status))
     {
-        Log("IoCreateDevice Error...\r\n");
+        Log("IoCreateDevice Error...");
         return status;
     }
     if (!DeviceObject)
     {
-        Log("Unexpected I/O Error...\r\n");
+        Log("Unexpected I/O Error...");
         return STATUS_UNEXPECTED_IO_ERROR;
     }
 
-    Log("DriverEntry\n");
+    // Register notify routines
+    status = NotifyLoad();
+    if (!NT_SUCCESS(status))
+    {
+        Log("Failed to register notify routines");
+        return status;
+    }
+
+    Log("DriverEntry");
 
     return STATUS_SUCCESS;
 }

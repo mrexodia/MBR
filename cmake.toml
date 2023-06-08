@@ -21,3 +21,4 @@ sources = [
     "src/MBR/*.cpp",
     "src/MBR/*.hpp",
 ]
+msvc.link-options = ["/INTEGRITYCHECK"]

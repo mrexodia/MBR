@@ -38,8 +38,10 @@ find_package(WDK REQUIRED)
 set(MBR_SOURCES
 	"src/MBR/driver.cpp"
 	"src/MBR/log.cpp"
+	"src/MBR/notify.cpp"
 	"src/MBR/driver.hpp"
 	"src/MBR/log.hpp"
+	"src/MBR/notify.hpp"
 	cmake.toml
 )
 
@@ -51,6 +53,12 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${MBR_SOURCES})
 target_compile_features(MBR PRIVATE
 	cxx_std_17
 )
+
+if(MSVC) # msvc
+	target_link_options(MBR PRIVATE
+		"/INTEGRITYCHECK"
+	)
+endif()
 
 get_directory_property(CMKR_VS_STARTUP_PROJECT DIRECTORY ${PROJECT_SOURCE_DIR} DEFINITION VS_STARTUP_PROJECT)
 if(NOT CMKR_VS_STARTUP_PROJECT)
