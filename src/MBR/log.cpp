@@ -4,7 +4,7 @@
 #define PREFIX "[MBR] "
 #define PREFIX_LEN (sizeof(PREFIX) - 1)
 
-// TODO: replace this with a proper logging system
+#ifdef _DEBUG
 void Log(_In_z_ _Printf_format_string_ const char* format, ...)
 {
 	// Format the string
@@ -20,10 +20,8 @@ void Log(_In_z_ _Printf_format_string_ const char* format, ...)
 	msg[index++] = '\n';
 	msg[index++] = '\0';
 
-#ifdef _DEBUG
 	// Log to the debugger
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, msg);
-#endif
+	KdPrint((msg));
 
 	// Log to the file
 	// TODO: use some symbolic link to not hardcode the driver letter
@@ -35,9 +33,7 @@ void Log(_In_z_ _Printf_format_string_ const char* format, ...)
 		NULL, NULL);
 	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
 	{
-#ifdef _DEBUG
 		DbgPrint(PREFIX "KeGetCurrentIrql != PASSIVE_LEVEL!\n");
-#endif
 		return;
 	}
 
@@ -60,3 +56,9 @@ void Log(_In_z_ _Printf_format_string_ const char* format, ...)
 		ZwClose(handle);
 	}
 }
+#else
+void Log(_In_z_ _Printf_format_string_ const char* format, ...)
+{
+	return;
+}
+#endif
