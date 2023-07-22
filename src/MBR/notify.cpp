@@ -32,20 +32,31 @@ static void CreateProcessNotifyRoutineEx(PEPROCESS process, HANDLE pid, PPS_CREA
 	UNREFERENCED_PARAMETER(pid);
 
 	if (createInfo != nullptr)
-	{
-		Log("[notify] [process] start %u (%wZ)", HandleToULong(pid), SafeString(createInfo->ImageFileName));
+	{		
+		TraceLoggingWrite(g_LoggingProviderEvents, "ProcessCreate",
+			TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+			TraceLoggingUInt64(HandleToUlong(pid), "PID"),
+			TraceLoggingUnicodeString(SafeString(createInfo->ImageFileName), "ImageFileName"));
+
+
 		// TODO: this is technically unsafe
 		// See: https://social.msdn.microsoft.com/Forums/windows/en-US/b49cdf12-029c-4272-ac41-a3c9842b1675/how-check-if-a-unicodestring-contains-in-other-unicodestring?forum=wdk
 		PCUNICODE_STRING commandLine = createInfo->CommandLine;
 		if (commandLine != nullptr && wcsstr(commandLine->Buffer, L"powershell") != nullptr)
 		{
-			Log("[notify] [process] Access to launch powershell.exe (%u) was denied!", HandleToULong(pid));
+			TraceLoggingWrite(g_LoggingProviderEvents, "ProcessDeny",
+				TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+				TraceLoggingUInt64(HandleToUlong(pid), "PID"),
+				TraceLoggingUnicodeString(SafeString(createInfo->ImageFileName), "ImageFileName"));
+
 			createInfo->CreationStatus = STATUS_ACCESS_DENIED;
 		}
 	}
 	else
 	{
-		Log("[notify] [process] exit %u", HandleToULong(pid));
+		TraceLoggingWrite(g_LoggingProviderEvents, "ProcessExit",
+			TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+			TraceLoggingUInt64(HandleToUlong(pid), "PID"));
 	}
 }
 
@@ -55,14 +66,10 @@ static void LoadImageNotifyRoutine(PUNICODE_STRING imageName, HANDLE pid, PIMAGE
 {
 	UNREFERENCED_PARAMETER(imageInfo);
 
-	auto processName = GetImageName(pid);
-
-	Log("[notify] [image] process %u (%wZ) loaded %wZ", HandleToUlong(pid), SafeString(processName), imageName);
-
-	if (processName != nullptr)
-	{
-		ExFreePool(processName);
-	}
+	TraceLoggingWrite(g_LoggingProviderEvents, "ImageLoad",
+		TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+		TraceLoggingUInt64(HandleToUlong(pid), "PID"),
+		TraceLoggingUnicodeString(imageName, "ImageFileName"));
 }
 
 // Reference: https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntddk/nc-ntddk-pcreate_thread_notify_routine
@@ -71,11 +78,17 @@ static void CreateThreadNotifyRoutine(HANDLE pid, HANDLE tid, BOOLEAN create)
 {
 	if (create)
 	{
-		Log("[notify] [thread] process %u created thread %u", HandleToUlong(pid), HandleToUlong(tid));
+		TraceLoggingWrite(g_LoggingProviderEvents, "ThreadCreate",
+			TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+			TraceLoggingUInt64(HandleToUlong(pid), "PID"),
+			TraceLoggingUInt64(HandleToUlong(tid), "TID"));
 	}
 	else
 	{
-		Log("[notify] [thread] process %u killed thread %u", HandleToUlong(pid), HandleToUlong(tid));
+		TraceLoggingWrite(g_LoggingProviderEvents, "ThreadKill",
+			TraceLoggingLevel(TRACE_LEVEL_INFORMATION),
+			TraceLoggingUInt64(HandleToUlong(pid), "PID"),
+			TraceLoggingUInt64(HandleToUlong(tid), "TID"));
 	}
 }
 
