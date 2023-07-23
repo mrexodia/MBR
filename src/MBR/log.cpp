@@ -22,39 +22,6 @@ void Log(_In_z_ _Printf_format_string_ const char* format, ...)
 
 	// Log to the debugger
 	KdPrint((msg));
-
-	// Log to the file
-	// TODO: use some symbolic link to not hardcode the driver letter
-	UNICODE_STRING FileName;
-	OBJECT_ATTRIBUTES objAttr;
-	RtlInitUnicodeString(&FileName, L"\\DosDevices\\C:\\MBR.log");
-	InitializeObjectAttributes(&objAttr, &FileName,
-		OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE,
-		NULL, NULL);
-	if (KeGetCurrentIrql() != PASSIVE_LEVEL)
-	{
-		DbgPrint(PREFIX "KeGetCurrentIrql != PASSIVE_LEVEL!\n");
-		return;
-	}
-
-	HANDLE handle;
-	IO_STATUS_BLOCK ioStatusBlock;
-	NTSTATUS ntstatus = ZwCreateFile(&handle,
-		FILE_APPEND_DATA,
-		&objAttr, &ioStatusBlock, NULL,
-		FILE_ATTRIBUTE_NORMAL,
-		FILE_SHARE_WRITE | FILE_SHARE_READ,
-		FILE_OPEN_IF,
-		FILE_SYNCHRONOUS_IO_NONALERT,
-		NULL, 0);
-	if (NT_SUCCESS(ntstatus))
-	{
-		size_t cb;
-		ntstatus = RtlStringCbLengthA(msg, sizeof(msg), &cb);
-		if (NT_SUCCESS(ntstatus))
-			ZwWriteFile(handle, NULL, NULL, NULL, &ioStatusBlock, msg, (ULONG)cb, NULL, NULL);
-		ZwClose(handle);
-	}
 }
 #else
 void Log(_In_z_ _Printf_format_string_ const char* format, ...)

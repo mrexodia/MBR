@@ -22,3 +22,10 @@ sources = [
     "src/MBR/*.hpp",
 ]
 msvc.link-options = ["/INTEGRITYCHECK"]
+
+[target.MBR-UM]
+type = "executable"
+sources = [
+    "src/MBR-UM/*.cpp",
+    "src/MBR-UM/*.hpp"
+]

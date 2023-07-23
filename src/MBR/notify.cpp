@@ -1,6 +1,10 @@
 #include "notify.hpp"
 #include "log.hpp"
 
+// 
+// TODO: Clean this all up.
+// 
+
 static PCUNICODE_STRING SafeString(PCUNICODE_STRING str)
 {
 	static UNICODE_STRING nullStr = RTL_CONSTANT_STRING(L"<nullptr>");

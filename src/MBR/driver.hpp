@@ -17,6 +17,4 @@ extern "C"
 #include <TraceLoggingProvider.h>
 #include <evntrace.h>
 
-// Seperate ETW providers. Driver information || Event information 
-_tlg_EXTERN_C_CONST TraceLoggingHProvider g_LoggingProviderDriver;
 _tlg_EXTERN_C_CONST TraceLoggingHProvider g_LoggingProviderEvents;
